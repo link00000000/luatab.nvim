@@ -46,16 +46,12 @@ M.windowCount = function(index)
     return nwins > 1 and '(' .. nwins .. ') ' or ''
 end
 
-M.devicon = function(bufnr, isSelected, current_label)
+M.devicon = function(bufnr, isSelected)
     local icon, devhl
     local file = vim.fn.bufname(bufnr)
     local buftype = vim.fn.getbufvar(bufnr, '&buftype')
     local filetype = vim.fn.getbufvar(bufnr, '&filetype')
     local devicons = require'nvim-web-devicons'
-
-    if current_label ~= 'default' then
-        return "🌝"
-    end
 
     if filetype == 'TelescopePrompt' then
         icon, devhl = devicons.get_icon('telescope')
@@ -96,7 +92,7 @@ M.cell = function(index)
         M.windowCount(index) ..
         M.title(bufnr, current_label) .. ' ' ..
         M.modified(bufnr) ..
-        M.devicon(bufnr, isSelected, current_label) .. '%T' ..
+        M.devicon(bufnr, isSelected) .. '%T' ..
         M.separator(index)
 end
 
