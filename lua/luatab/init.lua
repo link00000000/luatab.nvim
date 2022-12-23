@@ -1,14 +1,12 @@
 local M = {}
 
-M.tab_labels = {'default'}
-
-M.title = function(bufnr, current_label)
+M.title = function(bufnr, user_specified_tab_name)
     local file = vim.fn.bufname(bufnr)
     local buftype = vim.fn.getbufvar(bufnr, '&buftype')
     local filetype = vim.fn.getbufvar(bufnr, '&filetype')
 
-    if current_label ~= "default" then
-        return current_label
+    if user_specified_tab_name ~= nil and string.len(user_specified_tab_name) > 0 then
+        return user_specified_tab_name
     end
 
     if buftype == 'help' then
@@ -85,7 +83,7 @@ M.cell = function(index)
     local buflist = vim.fn.tabpagebuflist(index)
     local winnr = vim.fn.tabpagewinnr(index)
     local bufnr = buflist[winnr]
-    local current_label = M.tab_labels[index]
+    local current_label = M.get_user_specified_tab_name(index)
     local hl = (isSelected and '%#TabLineSel#' or '%#TabLine#')
 
     return hl .. '%' .. index .. 'T' .. ' ' ..
@@ -108,10 +106,18 @@ M.tabline = function()
     return line
 end
 
+M.set_user_specified_tab_name = function(index)
+    if index == nil then
+        index = vim.fn.tabpagenr()
+    end
 
-M.rename_tab = function()
     local new_label = vim.fn.input('New tab name: ')
-    M.tab_labels[vim.fn.tabpagenr()] = new_label
+    vim.fn.settabvar(index, "luatab__tab_name", new_label)
+end
+
+M.get_user_specified_tab_name = function(index)
+    local value = vim.fn.gettabvar(index, "luatab__tab_name")
+    return value
 end
 
 local setup = function(opts)
@@ -137,28 +143,11 @@ please replace it with
 ]]
 end
 
--- When you enter a new tab
-vim.api.nvim_create_autocmd('TabNew', {
-    callback = function()
-      local tabs_labels = require('luatab').helpers.tab_labels
-      table.insert(tabs_labels, 'default')
-    end
-})
-
--- When you leave a tab
-vim.api.nvim_create_autocmd('TabClosed', {
-    callback = function()
-      local tabs_labels = require('luatab').helpers.tab_labels
-      local removed_index = vim.fn.expand('<afile>')
-      table.remove(tabs_labels, removed_index)
-    end
-})
-
-vim.api.nvim_create_user_command('LuatabLabelRename', 'lua require(\'luatab\').helpers.rename_tab()', {})
-
+vim.api.nvim_create_user_command('LuatabSetName', 'lua require(\'luatab\').helpers.set_user_specified_tab_name()', {})
 
 return {
     helpers = M,
     setup = setup,
     tabline = warning,
+    rename_tab = M.set_user_specified_tab_name
 }
